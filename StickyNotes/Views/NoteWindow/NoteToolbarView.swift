@@ -9,6 +9,7 @@ struct NoteToolbarView: View {
     let onAudioSaved: (Data) -> Void
     let onStartDictation: () -> Void
     let onStopDictation: () -> Void
+    let onCreateNote: () -> Void
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -91,14 +92,20 @@ struct NoteToolbarView: View {
 
     private var noteMenu: some View {
         Menu {
+            Button { onCreateNote() } label: {
+                Label("New Note", systemImage: "plus")
+            }
+            Divider()
             Section {
                 ForEach(NoteColor.allCases, id: \.self) { color in
                     Button {
                         note.setColor(color)
                     } label: {
-                        HStack {
-                            Image(systemName: note.noteColor == color ? "checkmark.circle.fill" : "circle.fill")
+                        Label {
                             Text(color.displayName)
+                        } icon: {
+                            Image(systemName: note.noteColor == color ? "checkmark.circle.fill" : "circle.fill")
+                                .foregroundStyle(color.background)
                         }
                     }
                 }

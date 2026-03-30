@@ -166,27 +166,36 @@ final class ClickableTextView: NSTextView {
         let lineText = text.substring(with: lineRange).trimmingCharacters(in: .newlines)
 
         if lineText.hasPrefix("☐ ") || lineText.hasPrefix("☑ ") {
-            // If the line is just a bare checkbox with no content, remove it instead
             let content = String(lineText.dropFirst(2)).trimmingCharacters(in: .whitespaces)
             if content.isEmpty {
-                // Remove the empty todo line
                 insertText("", replacementRange: lineRange)
+                resetTypingAttributesToDefault()
                 return
             }
-            // Auto-continue with unchecked todo
             super.insertNewline(sender)
             insertText("☐ ", replacementRange: selectedRange())
         } else if lineText.hasPrefix("• ") {
             let content = String(lineText.dropFirst(2)).trimmingCharacters(in: .whitespaces)
             if content.isEmpty {
                 insertText("", replacementRange: lineRange)
+                resetTypingAttributesToDefault()
                 return
             }
-            // Auto-continue bullet
             super.insertNewline(sender)
             insertText("• ", replacementRange: selectedRange())
+        } else if lineText.isEmpty {
+            // Double-enter: previous line was already empty — clear all formatting
+            super.insertNewline(sender)
+            resetTypingAttributesToDefault()
         } else {
             super.insertNewline(sender)
         }
+    }
+
+    private func resetTypingAttributesToDefault() {
+        typingAttributes = [
+            .font: NSFont.systemFont(ofSize: 14),
+            .foregroundColor: NSColor.textColor
+        ]
     }
 }

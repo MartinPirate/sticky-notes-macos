@@ -65,7 +65,7 @@ struct WindowAccessor: NSViewRepresentable {
                 window.setFrame(frame, display: true)
             }
 
-            window.level = .floating
+            window.level = .normal
             parent.onWindowFound?(window)
         }
 

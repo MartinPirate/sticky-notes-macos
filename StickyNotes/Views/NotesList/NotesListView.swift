@@ -3,13 +3,16 @@ import SwiftData
 
 struct NotesListView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openWindow) private var openWindow
     @Environment(WindowManager.self) private var windowManager
+    @Environment(ActiveWindowTracker.self) private var activeWindowTracker
     @Query(sort: \StickyNote.modifiedAt, order: .reverse) private var notes: [StickyNote]
     @State private var searchText = ""
     @State private var noteToDelete: StickyNote?
     @State private var showDeleteConfirmation = false
     @State private var isCollapsed = false
     @AppStorage("confirmBeforeDelete") private var confirmBeforeDelete = true
+    @AppStorage("followActiveApp") private var followActiveApp = true
 
     private var filteredNotes: [StickyNote] {
         if searchText.isEmpty { return notes }
@@ -32,6 +35,12 @@ struct NotesListView: View {
         }
         .frame(minWidth: 280, idealWidth: 320, minHeight: 400)
         .background(Color(.windowBackgroundColor))
+        .onChange(of: followActiveApp) { _, newValue in
+            activeWindowTracker.isEnabled = newValue
+        }
+        .onAppear {
+            activeWindowTracker.isEnabled = followActiveApp
+        }
         .alert("Delete Note?", isPresented: $showDeleteConfirmation) {
             Button("Cancel", role: .cancel) { noteToDelete = nil }
             Button("Delete", role: .destructive) {
@@ -124,10 +133,7 @@ struct NotesListView: View {
         } else {
             note.isOpen = true
             windowManager.markOpened(note.id)
-            NotificationCenter.default.post(
-                name: .openNoteWindow, object: nil,
-                userInfo: ["noteID": note.id]
-            )
+            openWindow(value: note.id)
         }
     }
 
@@ -145,8 +151,4 @@ struct NotesListView: View {
         modelContext.delete(note)
         try? modelContext.save()
     }
-}
-
-extension Notification.Name {
-    static let openNoteWindow = Notification.Name("openNoteWindow")
 }

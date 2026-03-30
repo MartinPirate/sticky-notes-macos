@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0B7C6C5DC2A1CF6261B12919 /* AudioClipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F95B31B727D6F6185EC084A4 /* AudioClipView.swift */; };
+		1613E870E5B0AD0AA6B25F71 /* ActiveWindowTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2162122D48048E4E42BB620 /* ActiveWindowTracker.swift */; };
 		1B0611F2DD666C3F1E806500 /* DurationFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30F40E07E43105C8EAC7BB02 /* DurationFormatting.swift */; };
 		1CB95E103FB9210DFEBEB993 /* DateFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22253EDED58982293A39106F /* DateFormatting.swift */; };
 		22D4EA9CD3503AD33D946692 /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE343E8B78ABF1CA38745D9C /* AudioRecorder.swift */; };
@@ -52,6 +53,7 @@
 		AA8553FD88D4A235710062D6 /* StickyNotesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StickyNotesApp.swift; sourceTree = "<group>"; };
 		AC75B15DB7993FBDBF019F5C /* NoteColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteColor.swift; sourceTree = "<group>"; };
 		BE343E8B78ABF1CA38745D9C /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
+		D2162122D48048E4E42BB620 /* ActiveWindowTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveWindowTracker.swift; sourceTree = "<group>"; };
 		D7217EF20296DFC6B0BC4020 /* FormattingBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormattingBar.swift; sourceTree = "<group>"; };
 		D8826B7F98B8949FE9E61E5A /* StickyNote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StickyNote.swift; sourceTree = "<group>"; };
 		EE586DF508DB92410B58BAD5 /* NoteWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteWindowView.swift; sourceTree = "<group>"; };
@@ -164,6 +166,7 @@
 		D753CBDB6AA2F149F82A6F7A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				D2162122D48048E4E42BB620 /* ActiveWindowTracker.swift */,
 				BE343E8B78ABF1CA38745D9C /* AudioRecorder.swift */,
 				0C0ECA073AFAF251A3B94B45 /* SpeechRecognizer.swift */,
 				1C430675DDF145051A7C5A15 /* TextEditorProxy.swift */,
@@ -247,6 +250,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1613E870E5B0AD0AA6B25F71 /* ActiveWindowTracker.swift in Sources */,
 				0B7C6C5DC2A1CF6261B12919 /* AudioClipView.swift in Sources */,
 				22D4EA9CD3503AD33D946692 /* AudioRecorder.swift in Sources */,
 				550F496734439B63A09B88EF /* ColorExtensions.swift in Sources */,

@@ -7,14 +7,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         false
     }
 
-    /// Re-open the notes list when clicking the dock icon with no windows visible
+    /// Always re-open the notes list when clicking the dock icon
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag {
-            // Re-show any existing list window, or SwiftUI will create a new one
-            for window in sender.windows where window.title == "Sticky Notes" {
-                window.makeKeyAndOrderFront(nil)
-                return false
-            }
+        // Always show the list window — floating note windows don't count as "the main window"
+        for window in sender.windows where window.title == "Sticky Notes" {
+            window.makeKeyAndOrderFront(nil)
+            return false
         }
         return true
     }
@@ -24,11 +22,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 struct StickyNotesApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var windowManager = WindowManager()
+    @State private var activeWindowTracker = ActiveWindowTracker()
     @Environment(\.openWindow) private var openWindow
 
     let sharedContainer: ModelContainer = {
         let schema = Schema([StickyNote.self])
-        let config = ModelConfiguration(schema: schema)
+        // Use the sandboxed container path so we keep existing notes data
+        let containerStore = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Containers/com.shenanigans.sticky-notes/Data/Library/Application Support/default.store")
+        let storeURL: URL
+        if FileManager.default.fileExists(atPath: containerStore.path) {
+            storeURL = containerStore
+        } else {
+            storeURL = URL.applicationSupportDirectory.appendingPathComponent("default.store")
+        }
+        let config = ModelConfiguration(schema: schema, url: storeURL)
         do {
             return try ModelContainer(for: schema, configurations: [config])
         } catch {
@@ -50,18 +58,20 @@ struct StickyNotesApp: App {
         WindowGroup("Sticky Notes") {
             NotesListView()
                 .environment(windowManager)
-                .onReceive(NotificationCenter.default.publisher(for: .openNoteWindow)) { notification in
-                    if let noteID = notification.userInfo?["noteID"] as? UUID {
-                        openWindow(value: noteID)
-                    }
-                }
+                .environment(activeWindowTracker)
+                .onAppear { activeWindowTracker.start() }
         }
         .modelContainer(sharedContainer)
         .defaultSize(width: 320, height: 500)
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Note") {
-                    NotificationCenter.default.post(name: .createNewNote, object: nil)
+                    let context = sharedContainer.mainContext
+                    let color = NoteColor.allCases.randomElement() ?? .yellow
+                    let note = StickyNote(color: color)
+                    context.insert(note)
+                    try? context.save()
+                    openWindow(value: note.id)
                 }
                 .keyboardShortcut("n", modifiers: .command)
             }
@@ -102,7 +112,6 @@ struct StickyNotesApp: App {
 }
 
 extension Notification.Name {
-    static let createNewNote = Notification.Name("createNewNote")
     static let formatBold = Notification.Name("formatBold")
     static let formatItalic = Notification.Name("formatItalic")
     static let formatUnderline = Notification.Name("formatUnderline")

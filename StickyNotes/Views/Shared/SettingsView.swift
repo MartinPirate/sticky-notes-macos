@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage("defaultColor") private var defaultColor: String = NoteColor.yellow.rawValue
     @AppStorage("confirmBeforeDelete") private var confirmBeforeDelete: Bool = true
+    @AppStorage("followActiveApp") private var followActiveApp: Bool = true
 
     var body: some View {
         Form {
@@ -22,8 +23,10 @@ struct SettingsView: View {
             }
 
             Toggle("Confirm before deleting a note", isOn: $confirmBeforeDelete)
+            Toggle("Follow active app window", isOn: $followActiveApp)
+                .help("Automatically reposition notes below the active app window")
         }
         .formStyle(.grouped)
-        .frame(width: 350, height: 150)
+        .frame(width: 350, height: 180)
     }
 }

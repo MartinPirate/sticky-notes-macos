@@ -5,6 +5,7 @@ struct NoteWindowView: View {
     let noteID: UUID
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.openWindow) private var openWindow
     @Environment(WindowManager.self) private var windowManager
     @State private var note: StickyNote?
     @State private var attributedText = NSAttributedString()
@@ -32,7 +33,8 @@ struct NoteWindowView: View {
                             try? modelContext.save()
                         },
                         onStartDictation: { startLiveDictation() },
-                        onStopDictation: { stopLiveDictation() }
+                        onStopDictation: { stopLiveDictation() },
+                        onCreateNote: { createNote() }
                     )
 
                     NoteTextEditor(
@@ -185,6 +187,16 @@ struct NoteWindowView: View {
         dictationAnchor = nil
         dictationLength = 0
         saveContent()
+    }
+
+    // MARK: - Create
+
+    private func createNote() {
+        let color = NoteColor.allCases.randomElement() ?? .yellow
+        let newNote = StickyNote(color: color)
+        modelContext.insert(newNote)
+        try? modelContext.save()
+        openWindow(value: newNote.id)
     }
 
     // MARK: - Delete

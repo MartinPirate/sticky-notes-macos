@@ -21,7 +21,7 @@ struct FormattingBar: View {
                 .padding(.horizontal, 3)
 
             formatButton(icon: "list.bullet", label: "Bullet List", tooltip: "Bullet List", action: onBulletList)
-            formatButton(icon: "checklist", label: "Todo List", tooltip: "Todo List", action: onTodoList)
+            formatButton(icon: "checkmark.square", label: "Todo List", tooltip: "Todo List", action: onTodoList)
 
             Divider()
                 .frame(height: 16)

@@ -7,6 +7,12 @@ A native macOS Sticky Notes app built with Swift and SwiftUI, inspired by Micros
 ![SwiftUI](https://img.shields.io/badge/SwiftUI-5-blue?logo=swift&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
+## Origin Story
+
+I switched from Windows to Mac and my biggest culture shock wasn't the dock or the keyboard shortcuts — it was realizing macOS doesn't ship with a proper Sticky Notes app. So instead of complaining, I built one. Native SwiftUI, floating notes, rich text, dictation, dark mode — the works.
+
+Need a fix, a new feature, or just a simple sticky note on your Mac? Open an issue, send a PR, or just grab it and use it. It's free and open source.
+
 ## Features
 
 - **Floating Notes** — Each note opens as its own borderless floating window, always on top
@@ -29,8 +35,8 @@ A native macOS Sticky Notes app built with Swift and SwiftUI, inspired by Micros
 ### Clone and Build
 
 ```bash
-git clone https://github.com/MartinPirate/sticky-notes-macos-.git
-cd sticky-notes-macos-
+git clone https://github.com/MartinPirate/sticky-notes-macos.git
+cd sticky-notes-macos
 ```
 
 ### Option A: Open in Xcode

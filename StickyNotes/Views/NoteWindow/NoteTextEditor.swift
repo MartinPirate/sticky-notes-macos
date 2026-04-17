@@ -91,11 +91,6 @@ struct NoteTextEditor: NSViewRepresentable {
             isUpdatingFromUI = false
         }
 
-        func textViewDidChangeSelection(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView else { return }
-            parent.proxy.updateSelection(textView.selectedRange())
-        }
-
         func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
             if let url = link as? URL {
                 NSWorkspace.shared.open(url)
@@ -160,36 +155,91 @@ final class ClickableTextView: NSTextView {
     }
 
     override func insertNewline(_ sender: Any?) {
-        let text = string as NSString
-        let cursorLocation = selectedRange().location
-        let lineRange = text.lineRange(for: NSRange(location: cursorLocation, length: 0))
-        let lineText = text.substring(with: lineRange).trimmingCharacters(in: .newlines)
+        let line = currentLineState()
 
-        if lineText.hasPrefix("☐ ") || lineText.hasPrefix("☑ ") {
-            let content = String(lineText.dropFirst(2)).trimmingCharacters(in: .whitespaces)
-            if content.isEmpty {
-                insertText("", replacementRange: lineRange)
-                resetTypingAttributesToDefault()
+        if let prefix = line.listPrefix {
+            if line.isEmptyListItem {
+                exitListPrefix(on: line.range)
                 return
             }
             super.insertNewline(sender)
-            insertText("☐ ", replacementRange: selectedRange())
-        } else if lineText.hasPrefix("• ") {
-            let content = String(lineText.dropFirst(2)).trimmingCharacters(in: .whitespaces)
-            if content.isEmpty {
-                insertText("", replacementRange: lineRange)
-                resetTypingAttributesToDefault()
-                return
-            }
-            super.insertNewline(sender)
-            insertText("• ", replacementRange: selectedRange())
-        } else if lineText.isEmpty {
+            insertText(prefix.continuation, replacementRange: selectedRange())
+        } else if line.text.isEmpty {
             // Double-enter: previous line was already empty — clear all formatting
             super.insertNewline(sender)
             resetTypingAttributesToDefault()
         } else {
             super.insertNewline(sender)
         }
+    }
+
+    override func insertTab(_ sender: Any?) {
+        let line = currentLineState()
+        if line.isEmptyListItem {
+            exitListPrefix(on: line.range)
+            return
+        }
+        super.insertTab(sender)
+    }
+
+    // MARK: - List-line handling
+
+    /// The list-prefix markers recognised by auto-continuation.
+    /// Each entry maps the detected marker to the marker used when continuing
+    /// to a new line (checked todos continue as unchecked).
+    private enum ListPrefix: String, CaseIterable {
+        case bullet = "• "
+        case todo = "☐ "
+        case todoDone = "☑ "
+
+        var continuation: String {
+            switch self {
+            case .bullet: return Self.bullet.rawValue
+            case .todo, .todoDone: return Self.todo.rawValue
+            }
+        }
+    }
+
+    private struct LineState {
+        let range: NSRange
+        let text: String
+        let listPrefix: ListPrefix?
+
+        var isEmptyListItem: Bool {
+            guard let listPrefix else { return false }
+            return String(text.dropFirst(listPrefix.rawValue.count))
+                .trimmingCharacters(in: .whitespaces)
+                .isEmpty
+        }
+    }
+
+    private func currentLineState() -> LineState {
+        let nsString = string as NSString
+        let cursorLocation = selectedRange().location
+        let range = nsString.lineRange(for: NSRange(location: cursorLocation, length: 0))
+        let text = nsString.substring(with: range).trimmingCharacters(in: .newlines)
+        let prefix = ListPrefix.allCases.first(where: { text.hasPrefix($0.rawValue) })
+        return LineState(range: range, text: text, listPrefix: prefix)
+    }
+
+    /// Replace a list-prefix line with an empty plain line, preserving the
+    /// trailing newline when present so paragraphs don't collapse into each
+    /// other. Resets typing attributes so subsequent input is plain text.
+    private func exitListPrefix(on lineRange: NSRange) {
+        insertText(preservedNewline(for: lineRange), replacementRange: lineRange)
+        resetTypingAttributesToDefault()
+    }
+
+    /// Returns "\n" if `lineRange` ends on a newline, otherwise "".
+    /// Safe for zero-length ranges (returns "") and bounds-checked against
+    /// the backing string so it can't read past the end.
+    private func preservedNewline(for lineRange: NSRange) -> String {
+        guard lineRange.length > 0 else { return "" }
+        let nsString = string as NSString
+        let lastCharIndex = lineRange.location + lineRange.length - 1
+        guard lastCharIndex < nsString.length else { return "" }
+        let lastChar = nsString.substring(with: NSRange(location: lastCharIndex, length: 1))
+        return lastChar == "\n" ? "\n" : ""
     }
 
     private func resetTypingAttributesToDefault() {

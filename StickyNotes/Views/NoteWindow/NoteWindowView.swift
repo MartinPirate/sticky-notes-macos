@@ -18,9 +18,17 @@ struct NoteWindowView: View {
     @State private var dictationLength: Int = 0
     @AppStorage("confirmBeforeDelete") private var confirmBeforeDelete = true
 
+    /// The note if it is still backed by a live SwiftData model.
+    /// Returns nil once the note has been deleted so callers can't read
+    /// properties off a tombstoned model (which would crash).
+    private var liveNote: StickyNote? {
+        guard let note, !note.isDeleted else { return nil }
+        return note
+    }
+
     var body: some View {
         Group {
-            if let note {
+            if let note = liveNote {
                 VStack(spacing: 0) {
                     NoteToolbarView(
                         note: note,
@@ -67,8 +75,10 @@ struct NoteWindowView: View {
                             audioRecorder.stopPlayback()
                             speechRecognizer.stopListening()
                             windowManager.markClosed(noteID)
-                            note.isOpen = false
-                            saveWindowPosition()
+                            if let note = liveNote {
+                                note.isOpen = false
+                                saveWindowPosition()
+                            }
                         }
                     )
                 )
@@ -108,7 +118,7 @@ struct NoteWindowView: View {
     }
 
     private func saveContent() {
-        guard let note else { return }
+        guard let note = liveNote else { return }
         note.plainTextContent = plainText
         note.attributedContentData = try? NSKeyedArchiver.archivedData(
             withRootObject: attributedText,
@@ -121,7 +131,7 @@ struct NoteWindowView: View {
     // MARK: - Window Position
 
     private func saveWindowPosition() {
-        guard let note else { return }
+        guard let note = liveNote else { return }
         if let frame = windowManager.windowFrame(for: noteID) {
             note.windowX = Double(frame.origin.x)
             note.windowY = Double(frame.origin.y)
@@ -141,7 +151,7 @@ struct NoteWindowView: View {
     }
 
     private func saveWindowPositionFromWindow(_ window: NSWindow) {
-        guard let note else { return }
+        guard let note = liveNote else { return }
         let frame = window.frame
         note.windowX = Double(frame.origin.x)
         note.windowY = Double(frame.origin.y)
@@ -210,11 +220,12 @@ struct NoteWindowView: View {
     }
 
     private func deleteNote() {
-        guard let note else { return }
+        guard let noteToDelete = note else { return }
         audioRecorder.stopPlayback()
         speechRecognizer.stopListening()
-        windowManager.closeWindow(for: noteID)
-        modelContext.delete(note)
+        self.note = nil
+        modelContext.delete(noteToDelete)
         try? modelContext.save()
+        windowManager.closeWindow(for: noteID)
     }
 }

@@ -7,25 +7,17 @@ extension NSAttributedString.Key {
 @Observable
 final class TextEditorProxy {
     weak var textView: NSTextView?
-    var lastSelectedRange: NSRange = NSRange(location: 0, length: 0)
-
-    func updateSelection(_ range: NSRange) {
-        if range.length > 0 {
-            lastSelectedRange = range
-        }
-    }
 
     // MARK: - Focus Management
 
+    /// Return the textView's current selection, restoring first-responder so the
+    /// caret remains where the user left it. NSTextView preserves its selection
+    /// across focus loss (e.g. when a toolbar button briefly takes focus), so we
+    /// trust `selectedRange()` directly instead of caching a stale range.
     private func restoreFocusAndRange() -> NSRange? {
         guard let textView else { return nil }
         textView.window?.makeFirstResponder(textView)
-        let current = textView.selectedRange()
-        let effective = current.length > 0 ? current : lastSelectedRange
-        if effective.length > 0 {
-            textView.setSelectedRange(effective)
-        }
-        return effective
+        return textView.selectedRange()
     }
 
     // MARK: - Font Trait Formatting (DRY: single method for B/I)
@@ -97,17 +89,23 @@ final class TextEditorProxy {
     func toggleTodoList() { toggleLinePrefix(prefix: "☐ ", matchPrefixes: ["☐ ", "☑ "]) }
 
     private func toggleLinePrefix(prefix: String, matchPrefixes: [String]) {
-        guard let textView else { return }
-        _ = restoreFocusAndRange()
+        guard let textView, let range = restoreFocusAndRange() else { return }
         let text = textView.string as NSString
-        let selectedRange = textView.selectedRange()
-        let effectiveRange = selectedRange.length > 0 ? selectedRange : lastSelectedRange
-        let lineRange = text.lineRange(for: effectiveRange)
+        let lineRange = text.lineRange(for: range)
         let lineText = text.substring(with: lineRange)
 
         let lines = lineText.components(separatedBy: "\n")
         let nonEmpty = lines.filter { !$0.isEmpty }
-        let allPrefixed = !nonEmpty.isEmpty && nonEmpty.allSatisfy { line in
+
+        // Cursor on a blank line (or selection of only blank lines): insert the
+        // prefix at the caret so the user can start typing a list item.
+        if nonEmpty.isEmpty {
+            textView.insertText(prefix, replacementRange: NSRange(location: range.location, length: 0))
+            notifyChange(textView)
+            return
+        }
+
+        let allPrefixed = nonEmpty.allSatisfy { line in
             matchPrefixes.contains(where: { line.hasPrefix($0) })
         }
 

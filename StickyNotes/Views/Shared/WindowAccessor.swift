@@ -59,13 +59,17 @@ struct WindowAccessor: NSViewRepresentable {
 
             if let noteID = parent.noteID {
                 window.identifier = NSUserInterfaceItemIdentifier(noteID.uuidString)
+                window.isExcludedFromWindowsMenu = true
+                window.styleMask.remove(.miniaturizable)
+                window.collectionBehavior.insert([.fullScreenAuxiliary, .ignoresCycle])
+                window.standardWindowButton(.miniaturizeButton)?.isHidden = true
             }
 
             if let frame = parent.windowFrame {
                 window.setFrame(frame, display: true)
             }
 
-            window.level = .normal
+            window.level = parent.noteID == nil ? .normal : .floating
             parent.onWindowFound?(window)
         }
 
